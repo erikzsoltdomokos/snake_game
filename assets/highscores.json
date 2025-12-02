@@ -28,5 +28,35 @@
     "difficulty": "NORMAL",
     "grid": "30x20",
     "name": ""
+  },
+  {
+    "score": 10,
+    "difficulty": "NORMAL",
+    "grid": "30x20",
+    "name": "Zsolt"
+  },
+  {
+    "score": 29,
+    "difficulty": "NORMAL",
+    "grid": "30x20",
+    "name": "Erik"
+  },
+  {
+    "score": 6,
+    "difficulty": "NORMAL",
+    "grid": "30x20",
+    "name": "Erik"
+  },
+  {
+    "score": 0,
+    "difficulty": "HARD",
+    "grid": "30x20",
+    "name": ""
+  },
+  {
+    "score": 5,
+    "difficulty": "HARD",
+    "grid": "30x20",
+    "name": "Zsolt"
   }
 ]

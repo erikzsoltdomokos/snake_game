@@ -102,13 +102,8 @@ class Menu:
         
         diff_label = self.options[self.selected][0]
         grid_size = (30, 20)
-        info2 = self.small.render(
-            f"Selected: {diff_label} | Wrap: {'On' if self.wrap_edges else 'Off'} | Grid: 30x20 | Tick: {get_tick_rate(self.options[self.selected][1])}",
-            True,
-            (200, 200, 200),
-        )
-        info2_x = screen.get_width() - info2.get_width() - 20
-        screen.blit(info2, (info2_x, 200))
+        # Stats line (Selected, Wrap, Grid, Tick) will be drawn at the bottom later
+        highscores_end_y = 0
         
         # Top 10 highscores panel
         if self.show_highscores:
@@ -139,6 +134,7 @@ class Menu:
                 txt = self.small.render(line, True, (185, 185, 185))
                 screen.blit(txt, (x, y))
                 y += 22
+            highscores_end_y = y
         
         # Fullscreen toggle button
         fs_label = self.small.render("Windowed" if not fullscreen else "Fullscreen", True, (220, 220, 220))
@@ -173,6 +169,72 @@ class Menu:
             txt = self.small.render(line, True, (180, 180, 180))
             screen.blit(txt, (col_x, hk_y))
             hk_y += 24
+
+        # Draw the stats line after all other texts with a small gap.
+        stats_full = (
+            f"Selected: {diff_label} | Wrap: {'On' if self.wrap_edges else 'Off'} | "
+            f"Grid: {grid_size[0]}x{grid_size[1]} | Tick: {get_tick_rate(self.options[self.selected][1])}"
+        )
+        available_left_w = screen.get_width() - 20 - col_x
+        stats_color = (200, 200, 200)
+
+        # Try to keep it one line by using a slightly smaller font when needed
+        candidate_sizes = [22, 20, 18]
+        stats_font = None
+        stats_surface = None
+        for sz in candidate_sizes:
+            fnt = pygame.font.SysFont("consolas", sz)
+            surf = fnt.render(stats_full, True, stats_color)
+            if surf.get_width() <= available_left_w:
+                stats_font = fnt
+                stats_surface = surf
+                break
+        if stats_font is None:
+            # None fit: use smallest and wrap
+            stats_font = pygame.font.SysFont("consolas", candidate_sizes[-1])
+            needs_wrap = True
+        else:
+            needs_wrap = False
+
+        if needs_wrap:
+            line1_txt = f"Selected: {diff_label} | Wrap: {'On' if self.wrap_edges else 'Off'} | Grid: {grid_size[0]}x{grid_size[1]}"
+            line2_txt = f"Tick: {get_tick_rate(self.options[self.selected][1])}"
+            line1_surf = stats_font.render(line1_txt, True, stats_color)
+            line2_surf = stats_font.render(line2_txt, True, stats_color)
+            total_h = line1_surf.get_height() + 6 + line2_surf.get_height()
+        else:
+            total_h = stats_surface.get_height()
+
+        desired_y = max(hk_y, highscores_end_y) + 16
+        left_x = col_x
+
+        # If there's room below all content on the left, place it there (single line or wrapped)
+        if desired_y + total_h <= screen.get_height() - 16:
+            if needs_wrap:
+                screen.blit(line1_surf, (left_x, desired_y))
+                screen.blit(line2_surf, (left_x, desired_y + line1_surf.get_height() + 6))
+            else:
+                screen.blit(stats_surface, (left_x, desired_y))
+        else:
+            # Fallback: place on the right column under highscores/preview region, clamped to bottom
+            if needs_wrap:
+                right_block_w = max(line1_surf.get_width(), line2_surf.get_width())
+                right_x = screen.get_width() - right_block_w - 20
+                right_block_h = total_h
+            else:
+                # stats_surface is guaranteed to exist when not wrapped
+                right_x = screen.get_width() - stats_surface.get_width() - 20
+                right_block_h = stats_surface.get_height()
+
+            right_base_y = highscores_end_y if self.show_highscores else 230
+            right_y = right_base_y + 16
+            right_y = min(right_y, screen.get_height() - right_block_h - 16)
+
+            if needs_wrap:
+                screen.blit(line1_surf, (right_x, right_y))
+                screen.blit(line2_surf, (right_x, right_y + line1_surf.get_height() + 6))
+            else:
+                screen.blit(stats_surface, (right_x, right_y))
             
         return False  # No mouse fullscreen toggle
     
